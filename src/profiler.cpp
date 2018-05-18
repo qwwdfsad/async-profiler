@@ -353,13 +353,11 @@ void Profiler::recordSample(void* ucontext, u64 counter, jint event_type, jmetho
         num_frames += makeEventFrame(frames + num_frames, BCI_THREAD_ID, (jmethodID)(uintptr_t)tid);
     }
 
-    int call_trace_id = 0;
     if (num_frames > 0) {
-        call_trace_id = storeCallTrace(num_frames, frames, counter);
         storeMethod(frames[0].method_id, frames[0].bci, counter);
+        int call_trace_id = storeCallTrace(num_frames, frames, counter);
+        _jfr.recordExecutionSample(lock_index, tid, call_trace_id);
     }
-
-    _jfr.recordExecutionSample(lock_index, tid, call_trace_id);
 
     _locks[lock_index].unlock();
 }
@@ -466,7 +464,11 @@ Error Profiler::stop() {
 
     _engine->stop();
     delete _engine;
+
+    // Acquire all spinlocks to avoid race with remaining signals
+    for (int i = 0; i < CONCURRENCY_LEVEL; i++) _locks[i].lock();
     _jfr.stop();
+    for (int i = 0; i < CONCURRENCY_LEVEL; i++) _locks[i].unlock();
 
     _state = IDLE;
     return Error::OK;
