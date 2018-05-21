@@ -16,9 +16,9 @@
 
 #include <map>
 #include <string>
+#include <arpa/inet.h>
 #include <cxxabi.h>
 #include <fcntl.h>
-#include <endian.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,6 +32,16 @@
 
 
 #define ARRAY_SIZE(arr)  (sizeof(arr) / sizeof(arr[0]))
+
+#ifndef htonll
+#include <byteswap.h>
+
+static inline u64 htonll(u64 x) {
+    return htonl(1) == 1 ? x : bswap_64(x);
+}
+
+#endif // htonll 
+
 
 const int RECORDING_BUFFER_SIZE = 65536;
 const int RECORDING_LIMIT = RECORDING_BUFFER_SIZE - 4096;
@@ -249,22 +259,22 @@ class Buffer {
     }
 
     void put16(short v) {
-        *(short*)(_data + _offset) = htobe16(v);
+        *(short*)(_data + _offset) = htons(v);
         _offset += 2;
     }
 
     void put32(int v) {
-        *(int*)(_data + _offset) = htobe32(v);
+        *(int*)(_data + _offset) = htonl(v);
         _offset += 4;
     }
 
     void put64(u64 v) {
-        *(u64*)(_data + _offset) = htobe64(v);
+        *(u64*)(_data + _offset) = htonll(v);
         _offset += 8;
     }
 
     void put32(int offset, int v) {
-        *(int*)(_data + offset) = htobe32(v);
+        *(int*)(_data + offset) = htonl(v);
     }
 
     void putUtf8(const char* v) {
@@ -331,12 +341,12 @@ class Recording {
         flush(_buf);
 
         // Patch checkpoint size field
-        int checkpoint_size = htobe32((int)(metadata_offset - checkpoint_offset));
+        int checkpoint_size = htonl((int)(metadata_offset - checkpoint_offset));
         ssize_t result = pwrite(_fd, &checkpoint_size, sizeof(checkpoint_size), (off_t)checkpoint_offset);
         (void)result;
 
         // Patch metadata offset
-        metadata_offset = htobe64(metadata_offset);
+        metadata_offset = htonll(metadata_offset);
         result = pwrite(_fd, &metadata_offset, sizeof(metadata_offset), 8);
         (void)result;
 
