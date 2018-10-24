@@ -21,10 +21,12 @@
 
 
 const long DEFAULT_INTERVAL = 10000000;  // 10 ms
+const long DEFAULT_HEAP_SAMPLING_FREQUENCY = 1024 * 1024;  // 1 MB
 const int DEFAULT_FRAMEBUF = 1000000;
 
 const char* const EVENT_CPU   = "cpu";
 const char* const EVENT_ALLOC = "alloc";
+const char* const EVENT_ALLOC_JVMTI = "alloc_jvmti";
 const char* const EVENT_LOCK  = "lock";
 
 enum Action {

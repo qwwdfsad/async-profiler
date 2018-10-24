@@ -24,6 +24,7 @@
 #include "profiler.h"
 #include "perfEvents.h"
 #include "allocTracer.h"
+#include "allocJvmtiTracer.h"
 #include "lockTracer.h"
 #include "flameGraph.h"
 #include "flightRecorder.h"
@@ -458,6 +459,9 @@ Error Profiler::start(Arguments& args) {
         _units = "ns";
     } else if (strcmp(args._event, EVENT_ALLOC) == 0) {
         _engine = new AllocTracer();
+        _units = "bytes";
+    } else if (strcmp(args._event, EVENT_ALLOC_JVMTI) == 0) {
+        _engine = new AllocJvmtiTracer();
         _units = "bytes";
     } else if (strcmp(args._event, EVENT_LOCK) == 0) {
         _engine = new LockTracer();

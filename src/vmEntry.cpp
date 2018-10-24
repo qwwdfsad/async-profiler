@@ -22,7 +22,6 @@
 #include "perfEvents.h"
 #include "lockTracer.h"
 
-
 static Arguments _agent_args;
 
 JavaVM* VM::_vm;
